@@ -306,35 +306,34 @@
   .ingredients-ta.need:focus { border-color: #b06020; }
   .ingredients-ta.need::placeholder { color: #e0b080; font-size: 0.65rem; }
 
-  /* Genre selector */
-  .genre-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 2px;
-  }
-
-  .genre-btn {
-    background: none;
+  /* Genre dropdown */
+  .genre-select {
+    width: 100%;
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2px 8px;
+    border-radius: 7px;
+    padding: 4px 26px 4px 8px;
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     color: var(--ink-mid);
     cursor: pointer;
-    transition: all 0.18s;
-    white-space: nowrap;
-    line-height: 1.6;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b0a090' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.2s, color 0.2s;
+    margin-bottom: 2px;
   }
-  .genre-btn:hover { border-color: var(--border-mid); background: var(--bg); }
-  .genre-btn.selected { color: #fff; border-color: transparent; font-weight: 500; }
-  .genre-btn[data-genre="和食"].selected    { background: #7a9e6e; }
-  .genre-btn[data-genre="洋食"].selected    { background: #6e8fbf; }
-  .genre-btn[data-genre="中華"].selected    { background: #c06050; }
-  .genre-btn[data-genre="アジア"].selected  { background: #b07a30; }
-  .genre-btn[data-genre="イタリアン"].selected { background: #8f6eb0; }
-  .genre-btn[data-genre="その他"].selected  { background: #909090; }
+  .genre-select:focus { border-color: var(--gold-light); }
+
+  .genre-select.g-和食    { border-left: 3px solid #7a9e6e; color: #4a7a40; background-color: #f4fbf2; }
+  .genre-select.g-洋食    { border-left: 3px solid #6e8fbf; color: #3a60a0; background-color: #f2f5fc; }
+  .genre-select.g-中華    { border-left: 3px solid #c06050; color: #a03828; background-color: #fdf3f2; }
+  .genre-select.g-アジア  { border-left: 3px solid #b07a30; color: #8a5a10; background-color: #fdf6ee; }
+  .genre-select.g-イタリアン { border-left: 3px solid #8f6eb0; color: #6a4a90; background-color: #f8f3fd; }
+  .genre-select.g-その他  { border-left: 3px solid #909090; color: #606060; background-color: #f5f5f5; }
 
   /* Memo */
   .memo-ta {
@@ -467,7 +466,7 @@
 
   <header>
     <p class="eyebrow">Weekly Dinner Planner</p>
-    <h1>今週の <em>夕食</em> 表</h1>
+    <h1>小澤Family 今週の <em>Dinner List</em></h1>
     <div class="header-ornament">✦</div>
   </header>
 
@@ -556,9 +555,10 @@ function buildCards() {
         <div>
           <div class="dish-label">🍽 夕食</div>
           <input type="text" class="dish-input" placeholder="今夜の料理名…" value="${esc(cd.dish)}">
-          <div class="genre-selector">
-            ${GENRES.map(g => `<button class="genre-btn${cd.genre === g ? ' selected' : ''}" data-genre="${g}">${g}</button>`).join('')}
-          </div>
+          <select class="genre-select ${cd.genre ? 'g-' + cd.genre : ''}">
+            <option value="">── ジャンルを選択 ──</option>
+            ${GENRES.map(g => `<option value="${g}" ${cd.genre === g ? 'selected' : ''}>${g}</option>`).join('')}
+          </select>
         </div>
         <div class="ing-group">
           <div class="ing-block">
@@ -578,27 +578,20 @@ function buildCards() {
     `;
 
     const dish = card.querySelector('.dish-input');
+    const genreSelect = card.querySelector('.genre-select');
     const have = card.querySelector('.ingredients-ta.have');
     const need = card.querySelector('.ingredients-ta.need');
     const memo = card.querySelector('.memo-ta');
     dish.addEventListener('input', () => { cellData(wk,i).dish = dish.value; save(); });
+    genreSelect.addEventListener('change', () => {
+      const g = genreSelect.value;
+      cellData(wk,i).genre = g;
+      genreSelect.className = 'genre-select' + (g ? ' g-' + g : '');
+      save();
+    });
     have.addEventListener('input', () => { cellData(wk,i).have = have.value; save(); });
     need.addEventListener('input', () => { cellData(wk,i).need = need.value; save(); });
     memo.addEventListener('input', () => { cellData(wk,i).memo = memo.value; save(); });
-
-    card.querySelectorAll('.genre-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const selected = btn.classList.contains('selected');
-        card.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('selected'));
-        if (!selected) {
-          btn.classList.add('selected');
-          cellData(wk,i).genre = btn.dataset.genre;
-        } else {
-          cellData(wk,i).genre = '';
-        }
-        save();
-      });
-    });
 
     grid.appendChild(card);
   }
