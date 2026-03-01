@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>夕食プランナー</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Sans+JP:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --bg2: #ede6d8;
+    --card: #ffffff;
+    --surface: #faf7f2;
+    --border: #e0d5c5;
+    --border-mid: #cdc0ad;
+    --gold: #a07840;
+    --gold-light: #c9a96e;
+    --gold-bg: #fdf4e3;
+    --green: #5a7a56;
+    --green-bg: #eef4ec;
+    --green-border: #b5cfb2;
+    --ink: #2c2416;
+    --ink-mid: #6b5c45;
+    --ink-dim: #b0a090;
+    --today-border: #a07840;
+    --today-bg: #fffbf3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(160,120,64,0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1060px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 2.5rem; }
+
+  .eyebrow {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 0.62rem;
+    letter-spacing: 0.38em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+  }
+
+  header h1 em { font-style: italic; color: var(--gold); }
+
+  .header-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 0.7rem;
+    color: var(--gold-light);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+  }
+  .header-ornament::before, .header-ornament::after {
+    content: '';
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light));
+  }
+  .header-ornament::after { transform: scaleX(-1); }
+
+  /* ── Week Nav ── */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .nav-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .nav-btn:hover { background: var(--gold-bg); border-color: var(--gold-light); }
+
+  .week-label {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: var(--ink-mid);
+    letter-spacing: 0.12em;
+    min-width: 210px;
+    text-align: center;
+  }
+
+  /* ── Cards ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .day-card:hover {
+    box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+    border-color: var(--border-mid);
+  }
+
+  .day-card.today {
+    border-color: var(--today-border);
+    background: var(--today-bg);
+    box-shadow: 0 0 0 2px rgba(160,120,64,0.18), 0 4px 16px rgba(160,120,64,0.12);
+  }
+
+  /* Card header */
+  .card-header {
+    background: var(--bg2);
+    padding: 10px 8px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .day-card.today .card-header {
+    background: var(--gold-bg);
+    border-bottom-color: rgba(160,120,64,0.25);
+  }
+
+  .day-en {
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    font-size: 0.55rem;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .day-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .day-jp {
+    font-size: 0.62rem;
+    color: var(--ink-mid);
+    margin-top: 2px;
+    display: block;
+  }
+
+  .day-card.today .day-num { color: var(--gold); }
+  .day-card.today .day-en,
+  .day-card.today .day-jp { color: var(--gold-light); }
+
+  /* Card body */
+  .card-body {
+    padding: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* Dish name */
+  .dish-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+
+  .dish-input {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px dashed var(--border-mid);
+    font-family: 'Playfair Display', serif;
+    font-size: 0.82rem;
+    color: var(--ink);
+    padding: 1px 0 5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .dish-input:focus { border-bottom-color: var(--gold); }
+  .dish-input::placeholder { color: var(--ink-dim); font-style: italic; font-size: 0.72rem; }
+
+  /* Ingredients */
+  .sub-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.15em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    font-family: 'Lato', sans-serif;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .ing-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ing-block { display: flex; flex-direction: column; gap: 3px; }
+
+  .ing-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 10px;
+    width: fit-content;
+  }
+
+  .ing-tag.have {
+    background: #eaf3ea;
+    color: #4a7a46;
+    border: 1px solid #b8d8b5;
+  }
+
+  .ing-tag.need {
+    background: #fef3e8;
+    color: #b06020;
+    border: 1px solid #f0c898;
+  }
+
+  .ingredients-ta {
+    width: 100%;
+    border-radius: 7px;
+    padding: 7px 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.7rem;
+    resize: none;
+    outline: none;
+    min-height: 100px;
+    line-height: 1.75;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .ingredients-ta.have {
+    background: #f4fbf4;
+    border: 1px solid #b8d8b5;
+    color: #3a6038;
+  }
+  .ingredients-ta.have:focus { border-color: #4a7a46; }
+  .ingredients-ta.have::placeholder { color: #9cc49a; font-size: 0.65rem; }
+
+  .ingredients-ta.need {
+    background: #fffaf4;
+    border: 1px solid #f0c898;
+    color: #8a5020;
+  }
+  .ingredients-ta.need:focus { border-color: #b06020; }
+  .ingredients-ta.need::placeholder { color: #e0b080; font-size: 0.65rem; }
+
+  /* Genre selector */
+  .genre-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+
+  .genre-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.62rem;
+    color: var(--ink-mid);
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+  .genre-btn:hover { border-color: var(--border-mid); background: var(--bg); }
+  .genre-btn.selected { color: #fff; border-color: transparent; font-weight: 500; }
+  .genre-btn[data-genre="和食"].selected    { background: #7a9e6e; }
+  .genre-btn[data-genre="洋食"].selected    { background: #6e8fbf; }
+  .genre-btn[data-genre="中華"].selected    { background: #c06050; }
+  .genre-btn[data-genre="アジア"].selected  { background: #b07a30; }
+  .genre-btn[data-genre="イタリアン"].selected { background: #8f6eb0; }
+  .genre-btn[data-genre="その他"].selected  { background: #909090; }
+
+  /* Memo */
+  .memo-ta {
+    width: 100%;
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+    border-radius: 7px;
+    padding: 6px 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.68rem;
+    color: var(--green);
+    resize: none;
+    outline: none;
+    min-height: 52px;
+    line-height: 1.7;
+    transition: border-color 0.2s;
+  }
+  .memo-ta:focus { border-color: var(--green); }
+  .memo-ta::placeholder { color: #a5c8a1; font-size: 0.63rem; }
+
+  /* ── Bottom ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 14px;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .panel-title span { color: var(--gold); }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .shopping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 3px 10px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+
+  .s-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 0.73rem;
+    color: var(--ink);
+  }
+
+  .s-item input[type=checkbox] {
+    accent-color: var(--gold);
+    width: 13px; height: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .s-item label { cursor: pointer; }
+  .s-item.done label { text-decoration: line-through; color: var(--ink-dim); }
+
+  .empty-msg {
+    font-size: 0.72rem;
+    color: var(--ink-dim);
+    font-style: italic;
+  }
+
+  .btn-gen {
+    margin-top: 0.9rem;
+    background: var(--gold-bg);
+    border: 1px solid var(--gold-light);
+    color: var(--gold);
+    padding: 7px 18px;
+    border-radius: 20px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-gen:hover { background: var(--gold); color: #fff; }
+
+  .notes-ta {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.72rem;
+    color: var(--ink);
+    resize: none;
+    outline: none;
+    min-height: 130px;
+    line-height: 1.75;
+    transition: border-color 0.2s;
+  }
+  .notes-ta:focus { border-color: var(--gold-light); }
+  .notes-ta::placeholder { color: var(--ink-dim); font-size: 0.68rem; }
+
+  @media (max-width: 860px) {
+    .cards-grid { grid-template-columns: repeat(4, 1fr); }
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 500px) {
+    .cards-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <p class="eyebrow">Weekly Dinner Planner</p>
+    <h1>今週の <em>夕食</em> 表</h1>
+    <div class="header-ornament">✦</div>
+  </header>
+
+  <div class="week-nav">
+    <button class="nav-btn" id="prevWeek">&#8592;</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button class="nav-btn" id="nextWeek">&#8594;</button>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid"></div>
+
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-title"><span>🛒</span> 買い物リスト</div>
+      <div id="shoppingList"><p class="empty-msg">食材を入力して「まとめる」を押してください</p></div>
+      <button class="btn-gen" id="generateBtn">今週の食材をまとめる</button>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span>📝</span> 週メモ</div>
+      <textarea class="notes-ta" id="weekNotes" placeholder="ストック食材、特売情報&#10;今週のテーマなど…"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DAYS_JP = ['月','火','水','木','金','土','日'];
+const DAYS_EN = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+const GENRES = ['和食','洋食','中華','アジア','イタリアン','その他'];
+const KEY = 'dinner-planner-v3';
+
+let offset = 0;
+let store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })();
+
+function save() { localStorage.setItem(KEY, JSON.stringify(store)); }
+
+function getMonday(off = 0) {
+  const t = new Date(), d = t.getDay();
+  const m = new Date(t);
+  m.setDate(t.getDate() + (d === 0 ? -6 : 1 - d) + off * 7);
+  m.setHours(0,0,0,0); return m;
+}
+
+function weekKey(off) {
+  const d = getMonday(off);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function cellData(wk, i) {
+  if (!store[wk]) store[wk] = {};
+  if (!store[wk][i]) store[wk][i] = { dish: '', genre: '', have: '', need: '', memo: '' };
+  return store[wk][i];
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildCards() {
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+  const monday = getMonday(offset);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const wk = weekKey(offset);
+
+  const end = new Date(monday); end.setDate(monday.getDate() + 6);
+  const f = d => `${d.getMonth()+1}/${d.getDate()}`;
+  document.getElementById('weekLabel').textContent =
+    `${monday.getFullYear()}年  ${f(monday)} — ${f(end)}`;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const isToday = d.getTime() === today.getTime();
+    const cd = cellData(wk, i);
+
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isToday ? ' today' : '');
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="day-en">${DAYS_EN[i]}</span>
+        <div class="day-num">${d.getDate()}</div>
+        <span class="day-jp">${DAYS_JP[i]}曜日</span>
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="dish-label">🍽 夕食</div>
+          <input type="text" class="dish-input" placeholder="今夜の料理名…" value="${esc(cd.dish)}">
+          <div class="genre-selector">
+            ${GENRES.map(g => `<button class="genre-btn${cd.genre === g ? ' selected' : ''}" data-genre="${g}">${g}</button>`).join('')}
+          </div>
+        </div>
+        <div class="ing-group">
+          <div class="ing-block">
+            <span class="ing-tag have">✓ 冷蔵庫にあるもの</span>
+            <textarea class="ingredients-ta have" placeholder="鶏もも肉&#10;にんにく&#10;玉ねぎ&#10;…">${esc(cd.have)}</textarea>
+          </div>
+          <div class="ing-block">
+            <span class="ing-tag need">🛒 買う必要があるもの</span>
+            <textarea class="ingredients-ta need" placeholder="オリーブオイル&#10;生クリーム&#10;…">${esc(cd.need)}</textarea>
+          </div>
+        </div>
+        <div>
+          <span class="sub-label">メモ・ポイント</span>
+          <textarea class="memo-ta" placeholder="調理のコツやアレンジ…">${esc(cd.memo)}</textarea>
+        </div>
+      </div>
+    `;
+
+    const dish = card.querySelector('.dish-input');
+    const have = card.querySelector('.ingredients-ta.have');
+    const need = card.querySelector('.ingredients-ta.need');
+    const memo = card.querySelector('.memo-ta');
+    dish.addEventListener('input', () => { cellData(wk,i).dish = dish.value; save(); });
+    have.addEventListener('input', () => { cellData(wk,i).have = have.value; save(); });
+    need.addEventListener('input', () => { cellData(wk,i).need = need.value; save(); });
+    memo.addEventListener('input', () => { cellData(wk,i).memo = memo.value; save(); });
+
+    card.querySelectorAll('.genre-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selected = btn.classList.contains('selected');
+        card.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('selected'));
+        if (!selected) {
+          btn.classList.add('selected');
+          cellData(wk,i).genre = btn.dataset.genre;
+        } else {
+          cellData(wk,i).genre = '';
+        }
+        save();
+      });
+    });
+
+    grid.appendChild(card);
+  }
+
+  document.getElementById('weekNotes').value = store[wk + '__notes'] || '';
+}
+
+function generateShopping() {
+  const wk = weekKey(offset);
+  const wd = store[wk] || {};
+  const map = new Map();
+  Object.values(wd).forEach(d => {
+    (d.need || '').split('\n').forEach(line => {
+      const t = line.trim(); if (t) map.set(t, (map.get(t)||0)+1);
+    });
+  });
+
+  const container = document.getElementById('shoppingList');
+  if (!map.size) { container.innerHTML = '<p class="empty-msg">食材が入力されていません</p>'; return; }
+
+  container.innerHTML = '';
+  const g = document.createElement('div'); g.className = 'shopping-grid';
+  map.forEach((cnt, name) => {
+    const item = document.createElement('div'); item.className = 's-item';
+    const id = 'si-' + Math.random().toString(36).substr(2,5);
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.id=id;
+    cb.addEventListener('change', () => item.classList.toggle('done', cb.checked));
+    const lbl = document.createElement('label'); lbl.htmlFor = id;
+    lbl.textContent = cnt > 1 ? `${name}（×${cnt}）` : name;
+    item.appendChild(cb); item.appendChild(lbl);
+    g.appendChild(item);
+  });
+  container.appendChild(g);
+}
+
+document.getElementById('prevWeek').addEventListener('click', () => { offset--; buildCards(); });
+document.getElementById('nextWeek').addEventListener('click', () => { offset++; buildCards(); });
+document.getElementById('generateBtn').addEventListener('click', generateShopping);
+document.getElementById('weekNotes').addEventListener('input', e => {
+  store[weekKey(offset) + '__notes'] = e.target.value; save();
+});
+
+buildCards();
+</script>
+</body>
+</html>
